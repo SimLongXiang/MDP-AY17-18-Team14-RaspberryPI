@@ -2,14 +2,15 @@ import sys
 import time
 import Queue
 import threading
-from bt_communication import *
-from sr_communication import *
+#from bt_communication import *
+#from sr_communication import *
 from pc_communication import *
 
 
 __author__ = 'Sim Long Siang'
 
 class Main(threading.Thread):
+    
     def __init__(self):
         threading.Thread.__init__(self)
 
@@ -24,20 +25,18 @@ class Main(threading.Thread):
 	time.sleep(1)	# wait for 1 secs before starting
 
 
-	# PC Functions
+    # PC Functions
 
     def writePC(self, msg_to_pc):
-    """
-    Write to PC. Invoke write_to_PC()
-    """
+    # Write to PC. Invoke write_to_PC()
+   
         self.pc_thread.write_to_PC(msg_to_pc)
 	#print "WritePC: Sent to PC: %s" % msg_to_pc
 
     def readPC(self):
-    """
-    Read from PC. Invoke read_from_PC() and send 
-    data according to header
-    """
+    # Read from PC. Invoke read_from_PC() and send 
+    # data according to header
+        
         print ("Inside readPC")
 	while True:
             read_pc_msg = self.pc_thread.read_from_PC()
@@ -58,20 +57,20 @@ class Main(threading.Thread):
 		print ("value received from PC: %s" % read_pc_msg[1:])
 		# time.sleep(1)	
 
-    
+    """
     # Android/BT functions
-    '''
+    
 
     def writeBT(self, msg_to_bt):
     """
-    Write to BT. Invoke write_to_bt()
+    #Write to BT. Invoke write_to_bt()
     """
 	self.bt_thread.write_to_bt(msg_to_bt)
 	#print ("Value sent to Android: %s" % msg_to_bt)
 
     def readBT(self):
     """
-    Read from BT. Invoke read_from_bt() and send data to PC
+    #Read from BT. Invoke read_from_bt() and send data to PC
     """
 
         print ("Inside readBT")
@@ -91,21 +90,21 @@ class Main(threading.Thread):
 	    else:
 		print ("incorrect header received from BT: [%s]" % read_bt_msg[0])
 		# time.sleep(1)
-    '''
+    
 
     # Serial Comm functions
 
-    '''
+    
     def writeSR(self, msg_to_sr):
     """
-    Write to Serial. Invoke write_to_serial()
+    #Write to Serial. Invoke write_to_serial()
     """
 	self.sr_thread.write_to_serial(msg_to_sr)
 	#print ("Value sent to arduino: %s" % msg_to_sr)
 
     def readSR(self):
     """
-    Read from SR. Invoke read_from_serial() and send data to PC
+    #Read from SR. Invoke read_from_serial() and send data to PC
     """
 	print ("Inside readSR")
 	while True:
@@ -136,7 +135,7 @@ class Main(threading.Thread):
                     
             except serial.serialutil.SerialException:
                 pass
-    '''
+    """
 		
     def initialize_threads(self):
 
@@ -186,9 +185,8 @@ class Main(threading.Thread):
 
 
     def close_all_sockets(self):
-    """
-    Close all sockets
-    """
+    # Close all sockets
+
 	pc_thread.close_all_pc_sockets()
 	#bt_thread.close_all_bt_sockets()
 	#sr_thread.close_all_sr_sockets()
