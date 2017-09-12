@@ -2,27 +2,28 @@ import sys
 import time
 import Queue
 import threading
+from pc_communication import *
 #from bt_communication import *
 #from sr_communication import *
-from pc_communication import *
+
 
 
 __author__ = 'Sim Long Siang'
 
 class Main(threading.Thread):
-    
+
     def __init__(self):
         threading.Thread.__init__(self)
 
-	self.pc_thread = PcAPI()
+        self.pc_thread = PcAPI()
 	#self.bt_thread = BluetoothAPI()
 	#self.sr_thread = SerialAPI()
 
 	# Initialize the connections
-	self.pc_thread.init_pc_comm()
+        self.pc_thread.init_pc_comm()
 	#self.bt_thread.connect_bluetooth()
 	#self.sr_thread.connect_serial()
-	time.sleep(1)	# wait for 1 secs before starting
+        time.sleep(1)	# wait for 1 secs before starting
 
 
     # PC Functions
@@ -38,40 +39,37 @@ class Main(threading.Thread):
     # data according to header
         
         print ("Inside readPC")
-	while True:
+        while True:
             read_pc_msg = self.pc_thread.read_from_PC()
 
             # Check header for destination and strip out first char
 			
             if(read_pc_msg[0].lower() == '0'):		# send to all
                 #self.writeBT(read_pc_msg[1:])		# strip the header
-                #self.writeSR(read_pc_msg[1:])	
-		print ("text received from PC: %s" % read_pc_msg[1:])
+                #self.writeSR(read_pc_msg[1:])
+                print ("text received from PC: %s" % read_pc_msg[1:])
 
-	    elif(read_pc_msg[0].lower() == '1'):	# send to arduino
+            elif(read_pc_msg[0].lower() == '1'):	# send to arduino
 		#self.writeSR(read_pc_msg[1:])		# strip the header
-		print ("value received from PC: %s" % read_pc_msg[1:])
+                print ("value received from PC: %s" % read_pc_msg[1:])
 
-	    elif(read_pc_msg[0].lower() == '2'):	# send to andriod
+            elif(read_pc_msg[0].lower() == '2'):	# send to andriod
 		#self.writeBT(read_pc_msg[1:])		# strip the header
-		print ("value received from PC: %s" % read_pc_msg[1:])
+                print ("value received from PC: %s" % read_pc_msg[1:])
 		# time.sleep(1)	
 
     """
     # Android/BT functions
     
-
     def writeBT(self, msg_to_bt):
-    """
     #Write to BT. Invoke write_to_bt()
-    """
+
 	self.bt_thread.write_to_bt(msg_to_bt)
 	#print ("Value sent to Android: %s" % msg_to_bt)
 
     def readBT(self):
-    """
     #Read from BT. Invoke read_from_bt() and send data to PC
-    """
+
 
         print ("Inside readBT")
         while True:
@@ -94,18 +92,15 @@ class Main(threading.Thread):
 
     # Serial Comm functions
 
-    
     def writeSR(self, msg_to_sr):
-    """
-    #Write to Serial. Invoke write_to_serial()
-    """
+    # Write to Serial. Invoke write_to_serial()
+
 	self.sr_thread.write_to_serial(msg_to_sr)
 	#print ("Value sent to arduino: %s" % msg_to_sr)
 
     def readSR(self):
-    """
-    #Read from SR. Invoke read_from_serial() and send data to PC
-    """
+    # Read from SR. Invoke read_from_serial() and send data to PC
+
 	print ("Inside readSR")
 	while True:
 	    #print ("Inside readSR")
@@ -140,9 +135,9 @@ class Main(threading.Thread):
     def initialize_threads(self):
 
 	# PC read and write thread
-	rt_pc = threading.Thread(target = self.readPC, name = "pc_read_thread")
+        rt_pc = threading.Thread(target = self.readPC, name = "pc_read_thread")
 	# print "created rt_pc"
-	wt_pc = threading.Thread(target = self.writePC, args = ("",), name = "pc_write_thread")
+        wt_pc = threading.Thread(target = self.writePC, args = ("",), name = "pc_write_thread")
 	# print "created wt_pc"
 
 	# Bluetooth (BT) read and write thread
@@ -159,8 +154,8 @@ class Main(threading.Thread):
 
 
 	# Set threads as daemons
-	rt_pc.daemon = True
-	wt_pc.daemon = True
+        rt_pc.daemon = True
+        wt_pc.daemon = True
 
 	#rt_bt.daemon = True
 	#wt_bt.daemon = True
@@ -168,12 +163,12 @@ class Main(threading.Thread):
 	#rt_sr.daemon = True
 	#wt_sr.daemon = True
 
-	print ("All threads initialized successfully")
+        print ("All threads initialized successfully")
 
 
 	# Start Threads
-	rt_pc.start()
-	wt_pc.start()
+        rt_pc.start()
+        wt_pc.start()
 
 	#rt_bt.start()
 	#wt_bt.start()
@@ -181,27 +176,27 @@ class Main(threading.Thread):
 	#rt_sr.start()
 	#wt_sr.start()
 	
-	print ("Starting rt and wt threads")
+        print ("Starting rt and wt threads")
 
 
     def close_all_sockets(self):
     # Close all sockets
 
-	pc_thread.close_all_pc_sockets()
+        pc_thread.close_all_pc_sockets()
 	#bt_thread.close_all_bt_sockets()
 	#sr_thread.close_all_sr_sockets()
-	print ("end threads")
+        print ("end threads")
 
     def keep_main_alive(self):
-	"""
+        """
 	function = Sleep for 500 ms and wake up.
 	Keep Repeating function 
 	until Ctrl+C is used to kill
 	the main thread.
-	"""
-	while True:
+        """
+        while True:
 		#suspend the thread  
-		time.sleep(0.5)
+                time.sleep(0.5)
 
 
 if __name__ == "__main__":
