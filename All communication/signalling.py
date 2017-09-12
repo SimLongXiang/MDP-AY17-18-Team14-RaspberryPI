@@ -5,7 +5,7 @@ __author__ = 'Aung Naing Oo'
 class SignallingApi(object):
 	#Class written to signal and timeout
 	def handler(self,signum, frame):
-		print "Signal handler called with signal", signum
+		print ("Signal handler called with signal", signum)
 		raise IOError("Couldn't open device!")
 
 	def signalling(self):
