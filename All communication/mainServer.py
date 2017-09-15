@@ -1,6 +1,6 @@
 import sys
 import time
-import queue
+import Queue
 import threading
 from pc_communication import *
 #from bt_communication import *
