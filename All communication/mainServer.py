@@ -16,11 +16,13 @@ class Main(threading.Thread):
         threading.Thread.__init__(self)
 
         self.pc_thread = PcAPI()
+        print("PC - PC thread created.")
 	#self.bt_thread = BluetoothAPI()
 	#self.sr_thread = SerialAPI()
 
 	# Initialize the connections
         self.pc_thread.init_pc_comm()
+        print("PC - PC connected completed.")
 	#self.bt_thread.connect_bluetooth()
 	#self.sr_thread.connect_serial()
         time.sleep(1)	# wait for 1 secs before starting
@@ -41,19 +43,20 @@ class Main(threading.Thread):
         print ("Inside readPC")
         while True:
             read_pc_msg = self.pc_thread.read_from_PC()
-
+            pc_msg = read_pc_msg.split("|")
+            
             # Check header for destination and strip out first char
 			
-            if(read_pc_msg[0].lower() == '0'):		# send to all
+            if(pc_msg[0].lower() == '0'):		# send to all
                 #self.writeBT(read_pc_msg[1:])		# strip the header
                 #self.writeSR(read_pc_msg[1:])
                 print ("text received from PC: %s" % read_pc_msg[1:])
 
-            elif(read_pc_msg[0].lower() == '1'):	# send to arduino
+            elif(pc_msg[0].lower() == '1'):	# send to arduino
 		#self.writeSR(read_pc_msg[1:])		# strip the header
                 print ("value received from PC: %s" % read_pc_msg[1:])
 
-            elif(read_pc_msg[0].lower() == '2'):	# send to andriod
+            elif(pc_msg[0].lower() == '2'):	# send to andriod
 		#self.writeBT(read_pc_msg[1:])		# strip the header
                 print ("value received from PC: %s" % read_pc_msg[1:])
 		# time.sleep(1)	
