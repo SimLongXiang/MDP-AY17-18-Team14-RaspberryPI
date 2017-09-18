@@ -2,7 +2,7 @@ import serial
 import time
 from signalling import *
 
-__author__ = "Aung Naing Oo"
+__author__ = "Sim Long Siang"
 
 class SerialAPI(object):
     def __init__(self):

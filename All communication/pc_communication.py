@@ -56,7 +56,7 @@ class PcAPI(object):
 
     def write_to_PC(self, message): # Write message to PC
         try:
-            self.client.sendto(message,self.addr)
+            self.client.sendto(message + "\n",self.addr)
             # print "Sent [%s] to PC" % message
 			
         except TypeError:
