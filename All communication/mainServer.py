@@ -32,15 +32,17 @@ class Main(threading.Thread):
 
     def writePC(self, msg_to_pc):
     # Write to PC. Invoke write_to_PC()
-   
-        self.pc_thread.write_to_PC(msg_to_pc)
-	#print "WritePC: Sent to PC: %s" % msg_to_pc
+        while True:
+            print ("PC - Inside writePC")
+            msg_to_pc = raw_input("Enter text: ")
+            self.pc_thread.write_to_PC(msg_to_pc)
+            #print "WritePC: Sent to PC: %s" % msg_to_pc
 
     def readPC(self):
     # Read from PC. Invoke read_from_PC() and send 
     # data according to header
         
-        print ("Inside readPC")
+        print ("PC - Inside readPC")
         while True:
             read_pc_msg = self.pc_thread.read_from_PC()
             pc_msg = read_pc_msg.split("|")
@@ -50,15 +52,15 @@ class Main(threading.Thread):
             if(pc_msg[0].lower() == '0'):		# send to all
                 #self.writeBT(read_pc_msg[1:])		# strip the header
                 #self.writeSR(read_pc_msg[1:])
-                print ("text received from PC: %s" % read_pc_msg[1:])
+                print ("text received from PC: %s" % pc_msg[1:])
 
             elif(pc_msg[0].lower() == '1'):	# send to arduino
 		#self.writeSR(read_pc_msg[1:])		# strip the header
-                print ("value received from PC: %s" % read_pc_msg[1:])
+                print ("value received from PC: %s" % pc_msg[1:])
 
             elif(pc_msg[0].lower() == '2'):	# send to andriod
 		#self.writeBT(read_pc_msg[1:])		# strip the header
-                print ("value received from PC: %s" % read_pc_msg[1:])
+                print ("value received from PC: %s" % pc_msg[1:])
 		# time.sleep(1)	
 
     """
