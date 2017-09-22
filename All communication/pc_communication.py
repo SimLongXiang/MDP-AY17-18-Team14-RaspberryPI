@@ -6,7 +6,7 @@ __author__ = "Sim Long Siang"
 
 class PcAPI(object):
     def __init__(self):
-        self.ip_address = "172.22.212.255" # Connecting to IP address of MDPGrp14
+        self.ip_address = "172.22.179.231" # Connecting to IP address of MDPGrp14
         self.port = 8088
         self.conn = None
         self.client = None

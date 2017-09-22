@@ -10,6 +10,15 @@ from pc_communication import *
 
 __author__ = 'Sim Long Siang'
 
+action_stat =  " "
+ex_map = " "
+ex_obs = " "
+movement = " "
+position = " "
+Is_complete = " "
+Is_terminated = " "
+waypoint = " "
+
 class Main(threading.Thread):
 
     def __init__(self):
@@ -46,22 +55,44 @@ class Main(threading.Thread):
         while True:
             read_pc_msg = self.pc_thread.read_from_PC()
             pc_msg = read_pc_msg.split("|")
+            action_stat = pc_msg[0]  
+            ex_map = pc_msg[1] 
+            ex_obs = pc_msg[2] 
+            movement = pc_msg[3]
+            position = pc_msg[4]
+            Is_complete = pc_msg[5]
             
-            # Check header for destination and strip out first char
+            # Check action_status for destination
+            # Action_status: EX, TE, FP, MV(Move_robot), SS(sensor_info), DONE
 			
-            if(pc_msg[0].lower() == '0'):		# send to all
-                #self.writeBT(read_pc_msg[1:])		# strip the header
+            if(action_stat.lower() == 'ex'):		# send to all
+                #self.writeBT(read_pc_msg[1:])		
                 #self.writeSR(read_pc_msg[1:])
-                print ("text received from PC: %s" % pc_msg[1:])
+                ToAndroid = []
+                ToAndroid.extend([action_stat, ex_map, ex_obs, position])
+                Android_Msg= "|".join(ToAndroid)
+                print ("PC send to Arduino : %s" % movement)
+                print ("PC send to Android : %s" % Android_Msg)
 
-            elif(pc_msg[0].lower() == '1'):	# send to arduino
-		#self.writeSR(read_pc_msg[1:])		# strip the header
-                print ("value received from PC: %s" % pc_msg[1:])
+            #if(action_stat.lower() == 'fp'):		# send to all
+                #self.writeBT(read_pc_msg[1:])		
+                #self.writeSR(read_pc_msg[1:])
+                #ToAndroid = []
+                #ToAndroid.extend([action_stat, ex_map, ex_obs, position])
+                #Android_Msg= "|".join(ToAndroid)
+                #print ("PC send to Arduino : %s" % movement)
+                #print ("PC send to Android : %s" % Android_Msg)
 
-            elif(pc_msg[0].lower() == '2'):	# send to andriod
-		#self.writeBT(read_pc_msg[1:])		# strip the header
-                print ("value received from PC: %s" % pc_msg[1:])
-		# time.sleep(1)	
+            #if(action_stat.lower() == 'te'):		# send to all
+                #self.writeBT(read_pc_msg[1:])		
+                #self.writeSR(read_pc_msg[1:])
+                #ToAndroid = []
+                #ToAndroid.extend([action_stat, ex_map, ex_obs, position])
+                #Android_Msg= "|".join(ToAndroid)
+                #print ("PC send to Arduino : %s" % movement)
+                #print ("PC send to Android : %s" % Android_Msg)
+
+            
 
     """
     # Android/BT functions
