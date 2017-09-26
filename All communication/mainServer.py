@@ -16,9 +16,9 @@ explored_obstacles = " "
 movement = " "
 robot_pos_dir = " "
 is_complete = " "
-waypoint = " "
-sensor_info = " "
-terminated = " "
+way_point = " "
+sensor_info =" "
+terminated = 0
 
 class Main(threading.Thread):
 
@@ -69,11 +69,18 @@ class Main(threading.Thread):
             if(action_stat.lower() == 'ex'):		# send to all
                 #self.writeBT(read_pc_msg[1:])
                 #self.writeSR(read_pc_msg[1:])
+
                 ToAndroid = []
-                ToAndroid.extend([action_stat, ex_map, ex_obs, position])
+                ToAndroid.extend([action_status, explored_map, explored_obstacles, robot_pos_dir])
                 Android_Msg= "|".join(ToAndroid)
-                print ("PC send to Arduino : %s" % movement)
                 print ("PC send to Android : %s" % Android_Msg)
+
+		        ToArduino = []
+		        action_status = "MV"
+                ToArduino.extend([action_status, movement])
+                Arduino_Msg= "|".join(ToArduino)
+                print ("PC send to Arduino : %s" % Arduino_Msg)
+
 
             #if(action_stat.lower() == 'fp'):		# send to all
                 #self.writeBT(read_pc_msg[1:])
@@ -123,16 +130,47 @@ class Main(threading.Thread):
 
     def writeSR(self, msg_to_sr):
         # Write to Serial. Invoke write_to_serial()
-        self.sr_thread.write_to_serial(msg_to_sr)
-        print ("Value sent to arduino: %s" % msg_to_sr)
+	   self.sr_thread.write_to_serial(msg_to_sr)
+       #print ("Message sent to arduino: %s" % msg_to_sr)
 
     def readSR(self):
         # Read from SR. Invoke read_from_serial() and send data to PC
-    	print ("Inside readSR")
-    	while True:
-    	    print ("Inside readSR")
-            
+	   print ("Inside readSR")
+       while True:
+           print ("Inside readSR")
+           try:
+               read_sr_msg = self.sr_thread.read_from_serial()
+               sr_msg = read_sr_msg.split("|")
+		# Write straight to Bluetooth and PC without any checking
+		# self.writeBT(read_sr_msg)
+		# self.writePC(read_sr_msg)
+                # print ("Value received from arduino: %s" % read_sr_msg)
+                # time.sleep(1)
 
+	# Remember to comment this out and use direct communication with PC
+
+	# Check header and send data to PC
+                if(sr_msg[0].lower() == 'ss'):	# sensor info send to PC
+                    sensor_info = sr_msg[1]
+                    if (terminated == 1):
+                        action_status = "TE"
+                    else:
+                        action_status = "EX"
+                    ToPC = []
+                    ToPC.extend([action_status, robot_pos_dir, sensor_info, way_point])
+                    PC_Msg= "|".join(ToPC)
+                    self.writePC(PC_Msg)
+                    print ("Sensor_info written to PC from SR: %s" % PC_Msg)
+
+                elif(sr_msg[0].lower() == 'done'):	# movement is completed
+        		    action_status = "SS"
+        		    self.writeSR(action_status + "|")
+        		    print ("Movement completed. Sending Sensor_Info." )
+                else:
+                    print ("incorrect header received from SR: [%s]" % sr_msg[0])
+                    time.sleep(1)
+            except serial.serialutil.SerialException:
+                pass
 
     def initialize_threads(self):
 
@@ -190,15 +228,13 @@ class Main(threading.Thread):
         print ("end threads")
 
     def keep_main_alive(self):
-        """
-	function = Sleep for 500 ms and wake up.
-	Keep Repeating function
-	until Ctrl+C is used to kill
-	the main thread.
-        """
+    	# function = Sleep for 500 ms and wake up.
+    	# Keep Repeating function
+    	# until Ctrl+C is used to kill
+    	# the main thread.
         while True:
 		#suspend the thread
-                time.sleep(0.5)
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":
