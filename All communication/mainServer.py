@@ -10,14 +10,15 @@ from pc_communication import *
 
 __author__ = 'Sim Long Siang'
 
-action_stat =  " "
-ex_map = " "
-ex_obs = " "
+action_status =  " "
+explored_map = " "
+explored_obstacles = " "
 movement = " "
-position = " "
-Is_complete = " "
-Is_terminated = " "
+robot_pos_dir = " "
+is_complete = " "
 waypoint = " "
+sensor_info = " "
+terminated = " "
 
 class Main(threading.Thread):
 
@@ -48,25 +49,25 @@ class Main(threading.Thread):
             #print "WritePC: Sent to PC: %s" % msg_to_pc
 
     def readPC(self):
-    # Read from PC. Invoke read_from_PC() and send 
+    # Read from PC. Invoke read_from_PC() and send
     # data according to header
-        
+
         print ("PC - Inside readPC")
         while True:
             read_pc_msg = self.pc_thread.read_from_PC()
             pc_msg = read_pc_msg.split("|")
-            action_stat = pc_msg[0]  
-            ex_map = pc_msg[1] 
-            ex_obs = pc_msg[2] 
+            action_status = pc_msg[0]
+            explored_map = pc_msg[1]
+            explored_obstacles = pc_msg[2]
             movement = pc_msg[3]
-            position = pc_msg[4]
-            Is_complete = pc_msg[5]
-            
+            robot_pos_dir = pc_msg[4]
+            is_complete = pc_msg[5]
+
             # Check action_status for destination
             # Action_status: EX, TE, FP, MV(Move_robot), SS(sensor_info), DONE
-			
+
             if(action_stat.lower() == 'ex'):		# send to all
-                #self.writeBT(read_pc_msg[1:])		
+                #self.writeBT(read_pc_msg[1:])
                 #self.writeSR(read_pc_msg[1:])
                 ToAndroid = []
                 ToAndroid.extend([action_stat, ex_map, ex_obs, position])
@@ -75,7 +76,7 @@ class Main(threading.Thread):
                 print ("PC send to Android : %s" % Android_Msg)
 
             #if(action_stat.lower() == 'fp'):		# send to all
-                #self.writeBT(read_pc_msg[1:])		
+                #self.writeBT(read_pc_msg[1:])
                 #self.writeSR(read_pc_msg[1:])
                 #ToAndroid = []
                 #ToAndroid.extend([action_stat, ex_map, ex_obs, position])
@@ -84,7 +85,7 @@ class Main(threading.Thread):
                 #print ("PC send to Android : %s" % Android_Msg)
 
             #if(action_stat.lower() == 'te'):		# send to all
-                #self.writeBT(read_pc_msg[1:])		
+                #self.writeBT(read_pc_msg[1:])
                 #self.writeSR(read_pc_msg[1:])
                 #ToAndroid = []
                 #ToAndroid.extend([action_stat, ex_map, ex_obs, position])
@@ -92,82 +93,47 @@ class Main(threading.Thread):
                 #print ("PC send to Arduino : %s" % movement)
                 #print ("PC send to Android : %s" % Android_Msg)
 
-            
-
-    """
     # Android/BT functions
-    
-    def writeBT(self, msg_to_bt):
-    #Write to BT. Invoke write_to_bt()
 
-	self.bt_thread.write_to_bt(msg_to_bt)
-	#print ("Value sent to Android: %s" % msg_to_bt)
+    def writeBT(self, msg_to_bt):
+        #Write to BT. Invoke write_to_bt()
+        self.bt_thread.write_to_bt(msg_to_bt)
+        #print ("Value sent to Android: %s" % msg_to_bt)
 
     def readBT(self):
-    #Read from BT. Invoke read_from_bt() and send data to PC
-
-
+        #Read from BT. Invoke read_from_bt() and send data to PC
         print ("Inside readBT")
         while True:
-	    read_bt_msg = self.bt_thread.read_from_bt()
+            read_bt_msg = self.bt_thread.read_from_bt()
+            bt_msg = read_bt_msg.split("|")
+            action_status = bt_msg[0]
+            robot_pos_dir = bt_msg[1]
+            # Check header and send to arduino
+            if(action_status.lower() == 'ex'):	# send to PC
+                # Construct string to send to Arduino
+                action_status = 'SS'
+                command = action_status + "|"
+                self.writeSR(command)
 
-	# Check header and send data to PC
-	    if(read_bt_msg[0].lower() == 'p'):	# send to PC
-	        self.writePC(read_bt_msg[1:])	# strip the header
-	        print ("Value received from Bluetooth: %s" % read_bt_msg[1:])
-
-	#### this case can be commented out ####
-	    elif(read_bt_msg[0].lower() == 'a'):	# send to SR
-		self.writeSR(read_bt_msg[1:])		# strip the header
-		print ("value received from BT: %s" % read_bt_msg[1:])
-
-	    else:
-		print ("incorrect header received from BT: [%s]" % read_bt_msg[0])
-		# time.sleep(1)
-    
+            elif(action_status.lower() == 'te')
+                # Construct string to send to Arduino
+                terminated = '1'
 
     # Serial Comm functions
 
     def writeSR(self, msg_to_sr):
-    # Write to Serial. Invoke write_to_serial()
-
-	self.sr_thread.write_to_serial(msg_to_sr)
-	#print ("Value sent to arduino: %s" % msg_to_sr)
+        # Write to Serial. Invoke write_to_serial()
+        self.sr_thread.write_to_serial(msg_to_sr)
+        print ("Value sent to arduino: %s" % msg_to_sr)
 
     def readSR(self):
-    # Read from SR. Invoke read_from_serial() and send data to PC
+        # Read from SR. Invoke read_from_serial() and send data to PC
+    	print ("Inside readSR")
+    	while True:
+    	    print ("Inside readSR")
+            
 
-	print ("Inside readSR")
-	while True:
-	    #print ("Inside readSR")
-	    try:
-                read_sr_msg = self.sr_thread.read_from_serial()
-		# Write straight to Bluetooth and PC without any checking
-		# self.writeBT(read_sr_msg)
-		# self.writePC(read_sr_msg)
-                # print ("Value received from arduino: %s" % read_sr_msg)
-                # time.sleep(1)
 
-	# Remember to comment this out and use direct communication with PC
-
-	# Check header and send data to PC
-                if(read_sr_msg[0].lower() == 'p'):	# send to PC
-                    self.writePC(read_sr_msg[1:])	# strip the header
-                    print ("value written to PC from SR: %s" % read_sr_msg[1:])
-
-                # this can be commented out 
-                elif(read_bt_msg[0].lower() == 'b'):	# send to BT
-                    self.writeBT(read_sr_msg[1:])		# strip the header
-                    print ("value written to BT from SR: %s" % read_sr_msg[1:])
-
-                else:
-                    print ("incorrect header received from SR: [%s]" % read_sr_msg[0])
-                    time.sleep(1)
-                    
-            except serial.serialutil.SerialException:
-                pass
-    """
-		
     def initialize_threads(self):
 
 	# PC read and write thread
@@ -211,7 +177,7 @@ class Main(threading.Thread):
 
 	#rt_sr.start()
 	#wt_sr.start()
-	
+
         print ("Starting rt and wt threads")
 
 
@@ -226,12 +192,12 @@ class Main(threading.Thread):
     def keep_main_alive(self):
         """
 	function = Sleep for 500 ms and wake up.
-	Keep Repeating function 
+	Keep Repeating function
 	until Ctrl+C is used to kill
 	the main thread.
         """
         while True:
-		#suspend the thread  
+		#suspend the thread
                 time.sleep(0.5)
 
 
@@ -239,4 +205,4 @@ if __name__ == "__main__":
 	mainThread = Main()
 	mainThread.initialize_threads()
 	mainThread.keep_main_alive()
-	mainThread.close_all_sockets()	
+	mainThread.close_all_sockets()
