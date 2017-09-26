@@ -10,14 +10,15 @@ from pc_communication import *
 
 __author__ = 'Sim Long Siang'
 
-action_stat =  " "
-ex_map = " "
-ex_obs = " "
+action_status =  " "
+explored_map = " "
+explored_obstacles = " "
 movement = " "
-position = " "
-Is_complete = " "
-Is_terminated = " "
-waypoint = " "
+robot_pos_dir = " "
+is_complete = " "
+way_point = " "
+sensor_info =" "
+terminated = 0
 
 class Main(threading.Thread):
 
@@ -55,11 +56,11 @@ class Main(threading.Thread):
         while True:
             read_pc_msg = self.pc_thread.read_from_PC()
             pc_msg = read_pc_msg.split("|")
-            action_stat = pc_msg[0]  
-            ex_map = pc_msg[1] 
-            ex_obs = pc_msg[2] 
+            action_status = pc_msg[0]  
+            explored_map = pc_msg[1] 
+            ex_obstacles = pc_msg[2] 
             movement = pc_msg[3]
-            position = pc_msg[4]
+            robot_pos_dir = pc_msg[4]
             Is_complete = pc_msg[5]
             
             # Check action_status for destination
@@ -69,10 +70,16 @@ class Main(threading.Thread):
                 #self.writeBT(read_pc_msg[1:])		
                 #self.writeSR(read_pc_msg[1:])
                 ToAndroid = []
-                ToAndroid.extend([action_stat, ex_map, ex_obs, position])
+                ToAndroid.extend([action_status, explored_map, explored_obstacles, robot_pos_dir])
                 Android_Msg= "|".join(ToAndroid)
-                print ("PC send to Arduino : %s" % movement)
-                print ("PC send to Android : %s" % Android_Msg)
+		print ("PC send to Android : %s" % Android_Msg)
+		
+		ToArduino = []
+		action_status = "MV"
+                ToArduino.extend([action_status, movement])
+                Arduino_Msg= "|".join(ToArduino)
+                print ("PC send to Arduino : %s" % Arduino_Msg)
+                
 
             #if(action_stat.lower() == 'fp'):		# send to all
                 #self.writeBT(read_pc_msg[1:])		
@@ -132,7 +139,7 @@ class Main(threading.Thread):
     # Write to Serial. Invoke write_to_serial()
 
 	self.sr_thread.write_to_serial(msg_to_sr)
-	#print ("Value sent to arduino: %s" % msg_to_sr)
+	#print ("Message sent to arduino: %s" % msg_to_sr)
 
     def readSR(self):
     # Read from SR. Invoke read_from_serial() and send data to PC
@@ -142,6 +149,7 @@ class Main(threading.Thread):
 	    #print ("Inside readSR")
 	    try:
                 read_sr_msg = self.sr_thread.read_from_serial()
+		sr_msg = read_sr_msg.split("|")
 		# Write straight to Bluetooth and PC without any checking
 		# self.writeBT(read_sr_msg)
 		# self.writePC(read_sr_msg)
@@ -151,14 +159,22 @@ class Main(threading.Thread):
 	# Remember to comment this out and use direct communication with PC
 
 	# Check header and send data to PC
-                if(read_sr_msg[0].lower() == 'p'):	# send to PC
-                    self.writePC(read_sr_msg[1:])	# strip the header
-                    print ("value written to PC from SR: %s" % read_sr_msg[1:])
+                if(sr_msg[0].lower() == 'ss'):	# sensor info send to PC
+		    sensor_info = sr_msg[1]
+		    if (terminated == 1):
+			action_status = "TE" 
 
-                # this can be commented out 
-                elif(read_bt_msg[0].lower() == 'b'):	# send to BT
-                    self.writeBT(read_sr_msg[1:])		# strip the header
-                    print ("value written to BT from SR: %s" % read_sr_msg[1:])
+ 		    ToPC = []
+                    ToPC.extend([action_status, robot_pos_dir, sensor_info, way_point])
+                    PC_Msg= "|".join(ToPC)
+                    self.writePC(PC_Msg)	
+                    print ("Sensor_info written to PC from SR: %s" % PC_Msg)
+
+                 
+                elif(sr_msg[0].lower() == 'done'):	# movement is completed
+		    action_status = "SS"
+		    self.writeSR(action_status + "|")
+		    print ("Movement completed. Sending Sensor_Info." )
 
                 else:
                     print ("incorrect header received from SR: [%s]" % read_sr_msg[0])
