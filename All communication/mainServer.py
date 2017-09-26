@@ -69,6 +69,7 @@ class Main(threading.Thread):
             if(action_stat.lower() == 'ex'):		# send to all
                 #self.writeBT(read_pc_msg[1:])		
                 #self.writeSR(read_pc_msg[1:])
+
                 ToAndroid = []
                 ToAndroid.extend([action_status, explored_map, explored_obstacles, robot_pos_dir])
                 Android_Msg= "|".join(ToAndroid)
@@ -163,6 +164,8 @@ class Main(threading.Thread):
 		    sensor_info = sr_msg[1]
 		    if (terminated == 1):
 			action_status = "TE" 
+		    elif
+			action_status = "EX"
 
  		    ToPC = []
                     ToPC.extend([action_status, robot_pos_dir, sensor_info, way_point])
