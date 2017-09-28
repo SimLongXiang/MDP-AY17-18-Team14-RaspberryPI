@@ -36,7 +36,7 @@ class PcAPI(object):
 	# Create a TCP/IP socket
         try:
             self.signalObject.signalling()
-            self.signalObject.signalTime(15)
+            self.signalObject.signalTime(100)
             #wait for 5 seconds before timeout
 			
             self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

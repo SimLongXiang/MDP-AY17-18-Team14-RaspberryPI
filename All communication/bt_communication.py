@@ -44,19 +44,19 @@ class BluetoothAPI(object):
 	btport = 4
 	try:
 		self.signalObject.signalling()
-		self.signalObject.signalTime(15)	#wait for 5 seconds before timeout
-		#print "--signall---..---"
-		self.server_socket = BluetoothSocket( RFCOMM )
+		self.signalObject.signalTime(100)    #wait for 5 seconds before timeout
+		self.server_socket = BluetoothSocket(RFCOMM)
 		self.server_socket.bind(("", btport))
 		self.server_socket.listen(1)	# Listen for requests
 		self.port = self.server_socket.getsockname()[1]
 		uuid = "00001101-0000-1000-8000-00805F9B34FB"
-
-		advertise_service( self.server_socket, "BluetoothServer",
-		                   service_id = uuid,
-		                   service_classes = [ uuid, SERIAL_PORT_CLASS ],
-		                   profiles = [ SERIAL_PORT_PROFILE ],
-							)
+                
+##		advertise_service( self.server_socket, "BluetoothServer",
+##		                   service_id = uuid,
+##		                   service_classes = [ uuid, SERIAL_PORT_CLASS ],
+##		                   profiles = [ SERIAL_PORT_PROFILE ],
+##							)
+		print ("listening for requests...")
 		print ("Waiting for connection on RFCOMM channel %d" % self.port)
 		# Accept requests
 		self.client_socket, client_address = self.server_socket.accept()
@@ -97,3 +97,6 @@ class BluetoothAPI(object):
 	except BluetoothError:
 		print ("Bluetooth Error. Connection reset by peer. Trying to connect...")
 		self.connect_bluetooth()	# Reestablish connection
+
+
+
