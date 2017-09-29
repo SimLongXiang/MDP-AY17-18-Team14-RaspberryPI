@@ -41,7 +41,7 @@ class BluetoothAPI(object):
 	Connect to the s5
 	"""
 	# Creating the server socket and bind to port		
-	btport = 4
+	btport = 1
 	try:
 		self.signalObject.signalling()
 		self.signalObject.signalTime(100)    #wait for 5 seconds before timeout
@@ -49,7 +49,7 @@ class BluetoothAPI(object):
 		self.server_socket.bind(("", btport))
 		self.server_socket.listen(1)	# Listen for requests
 		self.port = self.server_socket.getsockname()[1]
-		uuid = "00001101-0000-1000-8000-00805F9B34FB"
+		uuid = "00001101-0000-1000-8000-00805f9b34fb"
                 
 ##		advertise_service( self.server_socket, "BluetoothServer",
 ##		                   service_id = uuid,
