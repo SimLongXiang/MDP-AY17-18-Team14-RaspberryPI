@@ -51,11 +51,11 @@ class BluetoothAPI(object):
 		self.port = self.server_socket.getsockname()[1]
 		uuid = "00001101-0000-1000-8000-00805f9b34fb"
                 
-##		advertise_service( self.server_socket, "BluetoothServer",
-##		                   service_id = uuid,
-##		                   service_classes = [ uuid, SERIAL_PORT_CLASS ],
-##		                   profiles = [ SERIAL_PORT_PROFILE ],
-##							)
+		advertise_service( self.server_socket, "BluetoothServer",
+		                   service_id = uuid,
+		                   service_classes = [ uuid, SERIAL_PORT_CLASS ],
+		                   profiles = [ SERIAL_PORT_PROFILE ],
+							)
 		print ("listening for requests...")
 		print ("Waiting for connection on RFCOMM channel %d" % self.port)
 		# Accept requests
@@ -65,7 +65,7 @@ class BluetoothAPI(object):
 		self.signalObject.signalTime(0)	#disarm the signal
 			
 	except Exception, e:
-		#print "Error: %s" %str(e)
+		print ("Error: %s" %str(e))
 		print ("Bluetooth Connection can't be established")
 		# self.close_bt_socket()
 		pass  #let it go through
