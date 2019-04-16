@@ -1,6 +1,5 @@
 import signal,os
 
-__author__ = 'Aung Naing Oo'
 
 class SignallingApi(object):
 	#Class written to signal and timeout
