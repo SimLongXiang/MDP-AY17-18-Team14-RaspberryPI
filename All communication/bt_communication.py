@@ -1,8 +1,6 @@
 from bluetooth import *
 from signalling import *
 
-__author__ = 'Aung Naing Oo'
-
 class BluetoothAPI(object):
 
     def __init__(self):
