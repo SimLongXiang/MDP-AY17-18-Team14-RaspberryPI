@@ -1,0 +1,355 @@
+import sys
+import time
+import Queue
+import threading
+from pc_communication import *
+from bt_communication import *
+from sr_communication import *
+
+
+
+action_status = ""
+explored_map = ""
+explored_obstacles = ""
+movement = ""
+robot_pos_dir = ""
+way_point = ""
+sensor_info = ""
+global terminate
+terminate = ""
+is_complete = ""
+
+class Main(threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+        self.pc_thread = PcAPI()
+        print("PC - PC thread created.")
+        self.bt_thread = BluetoothAPI()
+        print("BT - Bluetooth thread created.")
+        self.sr_thread = SerialAPI()
+        print("SR - Arduino thread created.")
+
+
+        # Initialize the connections
+
+        self.pc_thread.init_pc_comm()
+        print("PC - PC connection completed.")
+        self.bt_thread.connect_bluetooth()
+        print("BT - Bluetooth connection completed.")
+        self.sr_thread.connect_serial()
+        print("SR - Arduino connection completed.")
+
+        time.sleep(1)   # wait for 1 secs before starting
+
+
+################## PC Functions #####################################
+##
+    def writePC(self, msg_to_pc):
+        # Write to PC. Invoke write_to_PC()
+        print ("SR - Inside writePC")
+        # while True:
+        self.pc_thread.write_to_PC(msg_to_pc)
+        print ("Message sent to PC: %s" % msg_to_pc)
+        '''
+        while True:
+                msg_to_pc = raw_input("Enter text: ")
+                 print "WritePC: Sent to PC: %s" % msg_to_pc
+        '''
+
+    def readPC(self):
+        print ("PC - Inside readPC")
+        while True:
+            read_pc_msg = self.pc_thread.read_from_PC()
+            print("Message from PC: " + read_pc_msg)
+
+            #self.writeSR(read_pc_msg) #debugging purposes
+
+            pc_msg = read_pc_msg.split("|")
+            global action_status
+            action_status = pc_msg[0]
+            global explored_map
+            explored_map = pc_msg[1]
+            global explored_obstacles
+            explored_obstacles = pc_msg[2]
+            global movement
+            movement = pc_msg[3]
+            global robot_pos_dir
+            robot_pos_dir = pc_msg[4]
+            global is_complete
+            is_complete = pc_msg[5]
+            is_complete = is_complete.strip()
+
+            print("is_complete: " + is_complete)
+            if (is_complete == '1' or is_complete == 1):
+                global terminate
+                terminate = '1'
+                print("is_complete = terminate = " + terminate)
+            print("terminate: " + terminate)
+
+            # PC to Arduino (Exploration)
+            if(action_status.lower() == 'ex' or action_status.lower() == 'te'):
+                ToAndroid = []
+                ToAndroid.extend([action_status, explored_map, explored_obstacles, robot_pos_dir,""])
+                Android_Msg= "|".join(ToAndroid)
+                self.writeBT(Android_Msg)
+                print ("Status EX, PC send to Android : %s" % Android_Msg)
+
+                ToArduino = []
+                action_status = "MV"
+                ToArduino.extend([action_status, movement])
+                Arduino_Msg= "|".join(ToArduino)
+                self.writeSR(Arduino_Msg)
+                print ("Status MV, PC send to Arduino : %s" % Arduino_Msg)
+
+            # PC to Arduino (Fastest Path)
+            elif(action_status.lower() == 'fp'):
+                ToAndroid = []
+                ToAndroid.extend([action_status,"","","",movement])
+                Android_Msg = "|".join(ToAndroid)
+                self.writeBT(Android_Msg)
+                print ("Status FP, PC send to Android : %s" % Android_Msg)
+
+                ToArduino = []
+                action_status = "MV"
+                ToArduino.extend([action_status, movement])
+                Arduino_Msg = "|".join(ToArduino)
+                self.writeSR(Arduino_Msg)
+                print ("Status FP/MV, PC send to Arduino : %s" % Arduino_Msg)
+
+
+################### Android/BT functions ###################################
+
+    def writeBT(self, msg_to_bt):
+        # Write to BT. Invoke write_to_bt()
+        print ("SR - Inside writeBT")
+        # while True:
+        if(msg_to_bt != ""):
+            self.bt_thread.write_to_bt(msg_to_bt)
+            print ("Message sent to Android: %s" % msg_to_bt)
+            '''
+            while True:
+                msg_to_bt = raw_input("RPI: ")
+                print ("writeBT: Message sent to Android: %s" % msg_to_bt)
+            '''
+
+
+    def readBT(self):
+        print ("BT - Inside readBT")
+        while True:
+            read_bt_msg = self.bt_thread.read_from_bt()
+            print("Message from Android: " + read_bt_msg)
+
+            #self.writeSR(read_bt_msg) #debugging purposes
+
+            bt_msg = read_bt_msg.split("|")
+            global action_status
+            action_status = bt_msg[0]
+            global robot_pos_dir
+            robot_pos_dir = bt_msg[1]
+            global movement
+            movement = bt_msg[2]
+            global way_point
+            way_point = bt_msg[3]
+            way_point = way_point.strip()
+
+            # Android to Arduino
+            if(action_status.lower() == 'ex'):
+                ToArduino = []
+                action_status = "SS"
+                ToArduino.extend([action_status,""])
+                Arduino_Msg = "|".join(ToArduino)
+                self.writeSR(Arduino_Msg)
+                print ("Status EX, Android send to Arduino : %s" % Arduino_Msg)
+
+            # Android to PC
+            elif(action_status.lower() == 'fp'):
+                ToPC = []
+                action_status = 'FP'
+                ToPC.extend([action_status,robot_pos_dir,"",way_point])
+                PC_Msg = "|".join(ToPC)
+                self.writePC(PC_Msg)
+                print ("Status FP, Android send to PC : %s" % PC_Msg)
+
+            elif(action_status.lower() == 'te'):
+                print ("Setting terminated == 1")
+                global terminated
+                terminated = '1'
+
+            elif(action_status.lower() == 'mr'):
+                ToArduino = []
+                action_status = 'MR'
+                ToArduino.extend([action_status,movement])
+                Arduino_Msg = "|".join(ToArduino)
+                self.writeSR(Arduino_Msg)
+                print ("Status MR, Android send to Arduino : %s" % Arduino_Msg)
+
+
+#################### Serial Comm functions ##################################
+
+    def writeSR(self, msg_to_sr):
+       # Write to Serial. Invoke write_to_serial()
+        print ("SR - Inside writeSR")
+       # while True:
+        if(msg_to_sr != ""):
+            self.sr_thread.write_to_serial(msg_to_sr)
+            print ("Message sent to arduino: %s" % msg_to_sr)
+
+
+    def readSR(self):
+       # Read from SR. Invoke read_from_serial() and send data to PC
+       print ("SR - Inside readSR")
+       while True:
+           try:
+                read_sr_msg = self.sr_thread.read_from_serial()
+                read_sr_msg = read_sr_msg.strip()
+
+                if (read_sr_msg == ""):
+                        continue
+
+                #self.writePC(read_sr_msg) #debugging purposes
+
+                print ("Message from Arduino: " + str(read_sr_msg))
+                sr_msg = read_sr_msg.split("|")
+                global action_status
+                action_status = sr_msg[0]
+                action_status = action_status.strip()
+                global sensor_info
+                sensor_info = sr_msg[1]
+                sensor_info = sensor_info.strip()
+
+               # Arduino to PC
+                if(action_status.lower() == 'ss'):
+                    print("Status SS, terminated: " + terminate + " is_complete: " + is_complete)
+
+                    if (terminate == '1'):
+                        action_status = "TE"
+                        print("Status Changed to TE")
+                    else:
+                        action_status = "EX"
+
+                    ToPC = []
+                    ToPC.extend([action_status, robot_pos_dir, sensor_info, way_point])
+                    PC_Msg= "|".join(ToPC)
+                    self.writePC(PC_Msg)
+                    print ("Status SS, Arduino send to PC : %s" % PC_Msg)
+
+                elif(action_status.lower() == 'donemr'):
+                    print("Status DONEMR.")
+
+               # Movement from Arduino is completed
+                elif(action_status.lower() == 'done'):
+                        print("Status DONE: terminated = " + terminate + "is_complete = " + is_complete)
+
+                         # Arduino to BT
+                        if(is_complete == '1'):
+                                print ("Exploration has completed")
+                                ToAndroid = []
+                                action_status = "DONE"
+                                ToAndroid.extend([action_status,"","","",""])
+                                Android_Msg = "|".join(ToAndroid)
+                                self.writeBT(Android_Msg)
+                                print ("Status IC/DONE, Arduino send to BT : %s" % Android_Msg)
+
+                        elif(terminate == '1'):
+                                print ("Terminated is called/Exploration has completed")
+                                ToAndroid = []
+                                action_status = "DONE"
+                                ToAndroid.extend([action_status,"","","",""])
+                                Android_Msg = "|".join(ToAndroid)
+                                self.writeBT(Android_Msg)
+                                print ("Status TE/DONE, Arduino send to BT: %s" %Android_Msg)
+
+                            # Arduino initiate SS back to Arduino
+                        else:
+                                print ("RPI ready for sensor information")
+                                ToArduino = []
+                                action_status = "SS"
+                                ToArduino.extend([action_status,""])
+                                Arduino_Msg = "|".join(ToArduino)
+                                self.writeSR(Arduino_Msg)
+                                print ("Status EX/DONE, RPI send to Arduino : %s" % Arduino_Msg)
+
+                else:
+                    print ("Incorrect header received from SR: [%s]" % action_status)
+                    time.sleep(1)
+
+           except serial.serialutil.SerialException:
+                pass
+
+####################### Thread Initialization ################################################
+
+    def initialize_threads(self):
+
+        # PC read and write thread
+        rt_pc = threading.Thread(target = self.readPC, name = "pc_read_thread")
+        print("Created rt_pc")
+        wt_pc = threading.Thread(target = self.writePC, args = ("",), name = "pc_write_thread")
+        print("Created wt_pc")
+
+        # Bluetooth (BT) read and write thread
+        rt_bt = threading.Thread(target = self.readBT, name = "bt_read_thread")
+        print("Created rt_bt")
+        wt_bt = threading.Thread(target = self.writeBT, args = ("",), name = "bt_write_thread")
+        print("Created wt_bt")
+
+        # Serial (SR) read and write thread
+        rt_sr = threading.Thread(target = self.readSR, name = "sr_read_thread")
+        print("Created rt_sr")
+        wt_sr = threading.Thread(target = self.writeSR, args = ("",), name = "sr_write_thread")
+        print("Created wt_sr")
+
+
+        # Set threads as daemons
+        rt_pc.daemon = True
+        wt_pc.daemon = True
+
+        rt_bt.daemon = True
+        wt_bt.daemon = True
+
+        rt_sr.daemon = True
+        wt_sr.daemon = True
+
+        print ("All threads initialized successfully\n")
+        # Start Thread
+
+        rt_pc.start()
+        wt_pc.start()
+
+        rt_bt.start()
+        wt_bt.start()
+
+        rt_sr.start()
+        wt_sr.start()
+
+
+        print ("Starting rt and wt threads\n")
+
+
+    def close_all_sockets(self):
+    # Close all sockets
+
+        pc_thread.close_all_pc_sockets()
+        bt_thread.close_all_bt_sockets()
+        sr_thread.close_all_sr_sockets()
+        print ("end threads\n")
+
+    def keep_main_alive(self):
+        #function = Sleep for 500 ms and wake up.
+        #Keep Repeating function
+        #until Ctrl+C is used to kill
+        #the main thread.
+
+        while True:
+            #suspend the thread
+            time.sleep(0.5)
+
+
+if __name__ == "__main__":
+        mainThread = Main()
+        mainThread.initialize_threads()
+        mainThread.keep_main_alive()
+        mainThread.close_all_sockets()
+
+
